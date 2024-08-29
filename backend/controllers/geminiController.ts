@@ -1,4 +1,4 @@
-// import { generateContentFunc } from "../service/geminiService";
+import { generateContentFunc } from "../service/geminiService";
 // import multer, { StorageEngine, FileFilterCallback } from "multer";
 import { Request, Response } from "express";
 import { v4 as uuidv4 } from "uuid";
@@ -44,19 +44,22 @@ export const uploadUserPhoto = upload.single("image");
 */
 
 /** UPLOAD THE DATA */
-const tempDataStore = new Map<string, object>();
 
 export const uploadGeminiData = async (req: Request, res: Response) => {
   const data = req.body;
   const measure_uuid = uuidv4();
-  console.log(data);
   if (!data) {
     return res.status(400).json({
       error_description: "Enter a valid input",
     });
   }
   try {
-    // const value = await generateContentFunc(data);
+    const string = await generateContentFunc(data.image);
+    const regex: RegExp = /\d+(?:,\d+)?/g;
+    const convert: RegExpMatchArray | null = string.match(regex);
+    const valor: number | null = convert
+      ? parseFloat(convert?.join("."))
+      : null;
 
     const customer = await Customer.findOne({
       "customer.customer_code": data.customer_code,
@@ -66,7 +69,7 @@ export const uploadGeminiData = async (req: Request, res: Response) => {
       measure_uuid,
       measure_datetime: data.measure_datetime,
       measure_type: data.measure_type,
-      measure_value: "",
+      measure_value: valor,
     };
 
     if (!customer) {
@@ -85,7 +88,7 @@ export const uploadGeminiData = async (req: Request, res: Response) => {
       message: "Operação realizada com sucesso",
       data: {
         // image_url: value,
-        measure_value: "",
+        measure_value: valor,
         measure_uuid,
       },
     });
@@ -178,4 +181,49 @@ export const confirmMeasurementBody = async (req: Request, res: Response) => {
 
 export const getMeasureList = async (req: Request, res: Response) => {
   const { customer_code } = req.params;
+  const measure_type = req.query?.measure_type as string;
+  const upperMeasureType = measure_type?.toUpperCase();
+
+  try {
+    const customer = await Customer.findOne({
+      "customer.customer_code": customer_code,
+    });
+
+    if (!customer) {
+      return res.status(404).json({
+        error_code: "INVALID_TYPE",
+        error_description: "Nenhum customer foi encontrado",
+      });
+    }
+
+    const data = {
+      customer_code,
+      measures: customer.measures,
+    };
+
+    if (measure_type) {
+      if (upperMeasureType !== "WATER" && upperMeasureType !== "GAS") {
+        return res.status(400).json({
+          error_code: "INVALID_TYPE",
+          error_description: "Tipo de medição não permitida",
+        });
+      } else {
+        const data = customer.measures.filter(
+          (type) => type.measure_type === upperMeasureType
+        );
+        return res.status(200).json({ success: true, data });
+      }
+    }
+
+    if (customer.measures.length === 0) {
+      return res.status(404).json({
+        error_code: "MEASURES_NOT_FOUND",
+        error_description: "Nenhuma leitura encontrada",
+      });
+    }
+
+    res.status(200).json({ success: true, data });
+  } catch (error) {
+    console.log("measure list error", error);
+  }
 };
