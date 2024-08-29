@@ -1,32 +1,73 @@
-import dotenv from "dotenv";
-dotenv.config({ path: "./config.env" });
+// import { generateContentFunc } from "../service/geminiService";
+import multer, { StorageEngine, FileFilterCallback } from "multer";
+import { Request, Response } from "express";
+import { v4 as uuidv4 } from "uuid";
 
-import { GoogleGenerativeAI, GenerativeModel } from "@google/generative-ai";
+const multerStorage: StorageEngine = multer.diskStorage({
+  destination: (
+    req: Request,
+    file: Express.Multer.File,
+    cb: FileFilterCallback
+  ) => {
+    cb(null, "public/");
+  },
+  filename: (
+    req: Request,
+    file: Express.Multer.File,
+    cb: FileFilterCallback
+  ) => {
+    const ext = file.mimetype.split("/")[1];
+    cb(null, `image-${Date.now()}.${ext}`);
+  },
+});
 
-interface GenerativeModelOptions {
-  model: string;
-}
+const multerFilter = (
+  req: Request,
+  file: Express.Multer.File,
+  cb: FileFilterCallback
+) => {
+  if (file.mimetype.startsWith("image")) {
+    cb(null, true);
+  } else {
+    cb("Not an image! Please upload only images.", false);
+  }
+};
 
-const geminiApiKey: string = process.env.GEMINI_API_KEY || "";
-console.log("geminiApiKey", geminiApiKey);
+const upload = multer({
+  storage: multerStorage,
+  fileFilter: multerFilter,
+});
 
-if (!geminiApiKey) {
-  throw new Error("API_KEY environment variable is required.");
-}
+export const uploadUserPhoto = upload.single("image");
 
-const genAI = new GoogleGenerativeAI(geminiApiKey);
+export const uploadGeminiData = async (req: Request, res: Response) => {
+  const data = req.body;
+  const measure_uuid = uuidv4();
+  console.log(data);
 
-const modelOptions: GenerativeModelOptions = { model: "gemini-1.5-flash" };
-
-const model = genAI.getGenerativeModel(modelOptions) as GenerativeModel;
-
-async function run() {
-  const prompt = "Write a story about an AI and magic";
-
-  const result = await model.generateContent(prompt);
-  const response = await result.response;
-  const text = response.text();
-  console.log(text);
-}
-
-run();
+  if (!data) {
+    return res.status(400).json({
+      error_description: "Enter a valid input",
+    });
+  }
+  try {
+    // const value = await generateContentFunc(`analyze this image and return the total amount to be paid, which is usually labeled as 'Total a Pagar' or 'TOTAL A PAGAR'. return just a numeric value, nothing more`, data);
+    res.status(200).json({
+      message: "Operação realizada com sucesso",
+      data: {
+        // image_url: value,
+        measure_value: "",
+        measure_uuid,
+      },
+    });
+  } catch (error) {
+    console.log("error", error);
+    res.status(400).json({
+      message: "Os dados fornecidos no corpo da requisição são inválidos",
+      data: {
+        error_code: "INVALID_DATA",
+        error_description: "Verifique os dados enviados",
+      },
+    });
+  }
+};
