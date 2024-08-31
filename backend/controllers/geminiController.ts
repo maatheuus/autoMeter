@@ -3,9 +3,11 @@ import { Request, Response } from "express";
 import { v4 as uuidv4 } from "uuid";
 import { ConfirmMeasurementBody, Measure } from "../service/types";
 import Customer from "../models/customerModel";
+import imgur from "imgur";
+
+imgur.setClientId(process.env.IMGUR_CLIENT_ID);
 
 /** UPLOAD THE DATA */
-
 export const uploadGeminiData = async (
   req: Request,
   res: Response
@@ -27,12 +29,14 @@ export const uploadGeminiData = async (
     const measureValue: number | null = matches
       ? parseFloat(matches?.join("."))
       : null;
+    const imageUrl = await imgur.uploadBase64(data.image.inlineData.data);
 
     const measure: Measure = {
       measure_uuid,
       measure_datetime: data.measure_datetime,
       measure_type: data.measure_type,
       measure_value: measureValue,
+      image_url: imageUrl.link,
     };
 
     const customer = await Customer.findOne({
@@ -54,7 +58,7 @@ export const uploadGeminiData = async (
     res.status(200).json({
       message: "Operação realizada com sucesso",
       data: {
-        // image_url: value,
+        image_url: imageUrl.link,
         measure_value: measureValue,
         measure_uuid,
       },
@@ -146,11 +150,14 @@ export const confirmMeasurementBody = async (
   }
 };
 
+/** GET MEASURE LIST */
+
 export const getMeasureList = async (
   req: Request,
   res: Response
 ): Promise<void> => {
   const { customer_code } = req.params;
+
   const measure_type = req.query?.measure_type as string;
   const upperMeasureType = measure_type?.toUpperCase();
 
@@ -168,17 +175,31 @@ export const getMeasureList = async (
     }
 
     if (measure_type) {
-      if (upperMeasureType !== "WATER" && upperMeasureType !== "GAS") {
+      if (
+        upperMeasureType !== "WATER" &&
+        upperMeasureType !== "GAS" &&
+        upperMeasureType !== "ALL"
+      ) {
         res.status(400).json({
           error_code: "INVALID_TYPE",
           error_description: "Tipo de medição não permitida",
         });
         return;
       }
-      const filteredMeasures = customer.measures.filter(
-        (m) => m.measure_type === upperMeasureType
-      );
-      res.status(200).json({ success: true, data: filteredMeasures });
+      let filteredMeasures;
+
+      if (upperMeasureType === "ALL") {
+        filteredMeasures = customer.measures;
+      } else {
+        filteredMeasures = customer.measures.filter(
+          (m) => m.measure_type === upperMeasureType
+        );
+      }
+
+      res.status(200).json({
+        success: true,
+        data: { measures: [...filteredMeasures], customer_code },
+      });
       return;
     }
 
