@@ -1,4 +1,20 @@
 services:
+  backend:
+    build:
+      context: ./backend
+    ports:
+      - "5000:5000"
+    depends_on:
+      - mongo
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
   mongo:
     image: mongo
     container_name: mongodb
@@ -20,20 +36,3 @@ services:
       ME_CONFIG_MONGODB_ADMINPASSWORD: example
       ME_CONFIG_MONGODB_URL: mongodb://root:example@mongo:27017/
       ME_CONFIG_BASICAUTH: false
-
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: auto-meter
-    restart: always
-    ports:
-      - "3000:3000"
-      - "5555:5555"
-    environment:
-      MONGO_URL: mongodb://root:example@mongo:27017/
-    depends_on:
-      - mongo
-    command: node_modules/.bin/nodemon -L --inspect=5555 index.js
-    volumes:
-      - ./:/usr/src/app
