@@ -29,8 +29,11 @@ services:
     restart: always
     ports:
       - "3000:3000"
+      - "5555:5555"
     environment:
       MONGO_URL: mongodb://root:example@mongo:27017/
     depends_on:
       - mongo
-    command: ["pnpm", "start"]
+    command: node_modules/.bin/nodemon -L --inspect=5555 index.js
+    volumes:
+      - ./:/usr/src/app
