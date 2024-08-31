@@ -10,6 +10,7 @@ export interface Measure {
   measure_type: string;
   measure_value: number | null;
   has_confirmed?: boolean;
+  image_url: string;
 }
 
 export interface Customer {
