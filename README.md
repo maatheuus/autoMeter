@@ -1,50 +1,59 @@
-# React + TypeScript + Vite
+# Auto-Meter
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Auto-Meter é uma aplicação que visa validar e corrigir valores lidos para faturas de água. Este projeto foi desenvolvido como parte de um teste técnico e inclui um back-end em Node.js com TypeScript, um front-end em React e é completamente dockerizado.
 
-Currently, two official plugins are available:
+## Tecnologias Utilizadas
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Back-end**: Node.js, TypeScript
+- **Front-end**: React, Vite, Tailwind CSS
+- **Banco de Dados**: MongoDB
+- **Containerização**: Docker, Docker Compose
 
-## Expanding the ESLint configuration
+## Estrutura do Projeto
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+- **Back-end**:
 
-- Configure the top-level `parserOptions` property like this:
+  - Localizado na pasta `backend`.
+  - Contém o código do servidor Node.js, incluindo endpoints para processamento e validação de dados.
 
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
-```
+- **Front-end**:
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+  - Localizado na pasta `frontend`.
+  - Contém a aplicação React com Vite e Tailwind CSS para a interface do usuário.
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
+- **Docker**:
+  - O projeto utiliza Docker para criar contêineres para o back-end, front-end e MongoDB.
+  - `docker-compose.yml` configura os serviços necessários para executar a aplicação.
 
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
-```
+## Como Rodar o Projeto
+
+### Requisitos
+
+- Docker
+- Docker Compose
+
+### Passos
+
+1. Clone o repositório:
+
+   ```bash
+   git clone <URL_DO_REPOSITORIO>
+   cd auto-meter
+
+   ```
+
+2. Navegue até o diretório do projeto:
+
+   ```bash
+   cd auto-meter
+
+   ```
+
+3. Construa e inicie os contêineres:
+
+   ```bash
+   docker-compose up --build
+
+   ```
+
+4. A aplicação estará disponível em http://localhost:3000 para o front-end e a API estará disponível em http://localhost:5000.
