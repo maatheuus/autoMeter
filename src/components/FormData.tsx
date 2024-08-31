@@ -1,43 +1,51 @@
 import { useState } from "react";
-import { uploadImage } from "../api";
 import ImageEncoder from "./ImageEncoder";
-import MeasurementForm from "./MeasurementForm";
+import { uploadImage } from "../api";
+import { useNavigate } from "react-router-dom";
+import { ImageData, MeasurementData } from "../interfaces";
 
 function FormData() {
   const [imageData, setImageData] = useState<ImageData | null>(null);
-  const [measurementData, setMeasurementData] = useState<{
-    customer_code: string;
-    measure_type: "WATER" | "GAS";
-    measure_datetime: string;
-  } | null>(null);
+  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [measurementData, setMeasurementData] =
+    useState<MeasurementData | null>(null);
 
   const handleImageDataReady = (data: ImageData) => {
     setImageData(data);
   };
 
-  const handleMeasurementSubmit = (data: {
-    customer_code: string;
-    measure_type: "WATER" | "GAS";
-    measure_datetime: string;
-  }) => {
+  const handleMeasurementSubmit = (data: MeasurementData) => {
     setMeasurementData(data);
   };
 
   const handleFinalSubmit = () => {
-    // console.log("imagedata", imageData);
-    // console.log("measurementdata", measurementData);
-
     if (imageData && measurementData) {
-      uploadImage({ image: imageData, ...measurementData });
+      setIsLoading(true);
+      uploadImage({ image: imageData, ...measurementData }).then(() => {
+        setIsLoading(false);
+        navigate("/list");
+      });
+    } else {
+      alert("Insira todos os dados corretamente, por favor!");
     }
   };
 
+  if (isLoading) {
+    return <p className="text-xl my-5 font-bold">Enviando seus dados...</p>;
+  }
   return (
-    <div className="bg-red-500">
-      <h1>Upload Image and Submit Measurement</h1>
-      <ImageEncoder onImageDataReady={handleImageDataReady} />
-      <MeasurementForm onSubmit={handleMeasurementSubmit} />
-      <button onClick={handleFinalSubmit}>Submit All</button>
+    <div>
+      <ImageEncoder
+        onImageDataReady={handleImageDataReady}
+        onSubmit={handleMeasurementSubmit}
+        handleFinalSubmit={handleFinalSubmit}
+      />
+      {isLoading && (
+        <p className="text-xl my-5 font-bold" role="status">
+          Enviando dados...
+        </p>
+      )}
     </div>
   );
 }
