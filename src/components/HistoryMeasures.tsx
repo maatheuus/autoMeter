@@ -2,16 +2,15 @@ import { formatDate } from "date-fns";
 import React, { useRef, useState } from "react";
 import { getMeasuresList } from "../api";
 import ConfirmModal from "./ConfirmModal";
+import { MeasuresData } from "../interfaces";
 
 const HistoryMeasures: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [measuresData, setMeasuresData] = useState<[]>([]);
+  const [measuresData, setMeasuresData] = useState<MeasuresData | []>([]);
   const [measureType, setMeasureType] = useState<undefined | string>(undefined);
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const customerCode = useRef<HTMLInputElement>(null);
-
-  // const fieldTest = Array.from({ length: 1 });
 
   function handleOpenModal() {
     setIsModalOpen(true);
@@ -21,15 +20,19 @@ const HistoryMeasures: React.FC = () => {
     e.preventDefault();
 
     setIsLoading(true);
-    getMeasuresList(customerCode.current?.value as string, measureType)
-      .then((res) => {
-        setMeasuresData(res?.data);
-        setIsLoading(false);
-      })
-      .catch((error) => {
-        alert(`Algo deu errado: ${error}`);
-        setIsLoading(false);
-      });
+    const customerCodeValue = customerCode.current?.value;
+
+    if (customerCodeValue) {
+      getMeasuresList(customerCodeValue, measureType)
+        .then((res) => {
+          setMeasuresData(res?.data as MeasuresData);
+          setIsLoading(false);
+        })
+        .catch((error) => {
+          alert(`Algo deu errado: ${error}`);
+          setIsLoading(false);
+        });
+    }
   }
 
   let listMeasures;
@@ -43,11 +46,15 @@ const HistoryMeasures: React.FC = () => {
       <div className="max-w-md rounded shadow-md  w-full mx-auto p-8">
         <form onSubmit={handleSubmitCode}>
           <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">
+            <label
+              htmlFor="customerCode"
+              className="block text-sm font-medium mb-1"
+            >
               Digite seu Código
             </label>
             <input
               type="text"
+              id="customerCode"
               ref={customerCode}
               required
               className="w-full p-2 border border-gray-300 rounded"
@@ -55,15 +62,20 @@ const HistoryMeasures: React.FC = () => {
             />
           </div>
           <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">
+            <label
+              htmlFor="measureType"
+              className="block text-sm font-medium mb-1"
+            >
               Tipo de Imagem (opcional)
             </label>
             <select
+              id="measureType"
               value={measureType}
               onChange={(e) =>
                 setMeasureType(e.target.value as "WATER" | "GAS")
               }
               className="w-full p-2 border border-gray-300 rounded"
+              aria-label="Selecione o tipo de imagem"
             >
               <option value="all">All</option>
               <option value="WATER">Water</option>
@@ -71,14 +83,19 @@ const HistoryMeasures: React.FC = () => {
             </select>
           </div>
 
-          <button className="w-full p-2  text-white font-bold rounded bg-blue-500 transition-all duration-300 hover:bg-blue-700">
+          <button
+            aria-busy={isLoading}
+            className="w-full p-2  text-white font-bold rounded bg-blue-500 transition-all duration-300 hover:bg-blue-700"
+          >
             Verificar Histórico
           </button>
         </form>
       </div>
 
       {isLoading && (
-        <p className="text-xl font-bold mt-12">Carregando os seus dados...</p>
+        <p role="status" className="text-xl font-bold mt-12">
+          Carregando os seus dados...
+        </p>
       )}
 
       {!isLoading && listMeasures?.length === 0 && (
@@ -89,7 +106,7 @@ const HistoryMeasures: React.FC = () => {
           <h1 className="text-2xl font-bold my-6">Histórico de Medições</h1>
 
           <ul className="flex flex-wrap gap-8">
-            {listMeasures?.map((measure, index) => {
+            {listMeasures?.map((measure) => {
               return (
                 <li className="mb-2" key={measure.measure_uuid}>
                   <div className="bg-blue-600/30 w-60 rounded-2xl overflow-hidden">
@@ -133,6 +150,7 @@ const HistoryMeasures: React.FC = () => {
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-blue-600 underline block hyphens-auto"
+                          aria-label={`Link para imagem da medição em ${measure.image_url}`}
                         >
                           {measure.image_url}
                         </a>
@@ -143,7 +161,11 @@ const HistoryMeasures: React.FC = () => {
                       {measure.has_confirmed ? (
                         <p className="text-sm">✅ Valor confirmado</p>
                       ) : (
-                        <button type="button" onClick={handleOpenModal}>
+                        <button
+                          aria-label="Confirme aqui o valor da medição"
+                          type="button"
+                          onClick={handleOpenModal}
+                        >
                           <p className="text-sm ">❌ Confirme aqui</p>
                         </button>
                       )}
