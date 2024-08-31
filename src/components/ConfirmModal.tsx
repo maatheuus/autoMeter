@@ -1,16 +1,6 @@
 import React, { useRef, useState } from "react";
 import { confirmedData } from "../api";
-
-interface ConfirmModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
-
-interface ConfirmData {
-  measure_uuid: string;
-  confirmed_value: number;
-  customer_code: string;
-}
+import { ConfirmData, ConfirmModalProps } from "../interfaces";
 
 const ConfirmModal: React.FC<ConfirmModalProps> = ({ isOpen, onClose }) => {
   const confirmedValue = useRef<HTMLInputElement>(null);
@@ -63,41 +53,59 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center">
+    <div
+      className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center"
+      aria-modal="true"
+      role="dialog"
+    >
       <div className="bg-white p-6 rounded-lg shadow-lg max-w-lg w-full">
         <h2 className="text-xl font-semibold mb-4">Editar Medição</h2>
 
         <form onSubmit={handleSave}>
           <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">
+            <label
+              htmlFor="userCode"
+              className="block text-sm font-medium mb-1"
+            >
               Código usuário
             </label>
             <input
               type="text"
+              id="userCode"
               ref={userCode}
               required
               className="w-full p-2 border border-gray-300 rounded"
               placeholder="Digite o seu código"
+              aria-label="Digite o seu código de usuário"
             />
           </div>
           <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">
+            <label
+              htmlFor="uuidCode"
+              className="block text-sm font-medium mb-1"
+            >
               Código UUID
             </label>
             <input
               type="text"
               ref={uuidCode}
               required
+              id="uuidCode"
               className="w-full p-2 border border-gray-300 rounded"
               placeholder="Digite o código UUID"
+              aria-label="Digite o código UUID"
             />
           </div>
           <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">
+            <label
+              htmlFor="confirmedValue"
+              className="block text-sm font-medium mb-1"
+            >
               Confirme o valor
             </label>
             <input
               type="text"
+              id="confirmedValue"
               ref={confirmedValue}
               required
               className="w-full p-2 border border-gray-300 rounded"
@@ -107,11 +115,16 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({ isOpen, onClose }) => {
             <button
               onClick={onClose}
               type="button"
+              aria-label="Cancelar"
               className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
             >
               Cancelar
             </button>
-            <button className="px-4 py-2 text-white rounded bg-blue-500 transition-all duration-300 hover:bg-blue-700">
+            <button
+              aria-busy={isLoading}
+              aria-label={isLoading ? "Salvando dados" : "Salvar"}
+              className="px-4 py-2 text-white rounded bg-blue-500 transition-all duration-300 hover:bg-blue-700"
+            >
               {isLoading ? "Salvando..." : "Salvar"}
             </button>
           </div>
